@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<body style="font-family:sans-serif;max-width:640px;margin:2rem auto">
+  <button id="btn">Start</button>
+  <p><b>Transcript:</b> <span id="final"></span><i id="interim" style="color:gray"></i></p>
+  <pre id="out">No score yet</pre>
+<script>
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) alert("SpeechRecognition not supported in this browser");
+
+const rec = new SR();
+rec.continuous = true;
+rec.interimResults = true;
+rec.lang = "en-US";
+
+let finalText = "", running = false, reqId = 0;
+
+rec.onresult = async (e) => {
+  let interim = "";
+  let gotFinal = false;
+  for (let i = e.resultIndex; i < e.results.length; i++) {
+    const t = e.results[i][0].transcript;
+    if (e.results[i].isFinal) { finalText += t + " "; gotFinal = true; }
+    else interim += t;
+  }
+  document.getElementById("final").textContent = finalText;
+  document.getElementById("interim").textContent = interim;
+
+  if (gotFinal) {                       // score only on finalized speech
+    const id = ++reqId;
+    const res = await fetch("/score", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({transcript: finalText.trim()})
+    });
+    const data = await res.json();
+    if (id === reqId)                   // ignore stale responses
+      document.getElementById("out").textContent = JSON.stringify(data, null, 2);
+  }
+};
+
+rec.onend = () => { if (running) rec.start(); };   // browser stops on silence; restart
+rec.onerror = (e) => console.error(e.error);
+
+document.getElementById("btn").onclick = () => {
+  running = !running;
+  document.getElementById("btn").textContent = running ? "Stop" : "Start";
+  running ? rec.start() : rec.stop();
+};
+</script>
+</body>
+</html>

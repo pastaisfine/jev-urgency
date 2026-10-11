@@ -1,0 +1,55 @@
+[project]
+name = "jev-project"
+version = "0.1.0"
+description = "Voice-driven urgency scorer: speak, get a 0-4 urgency rating read back to you"
+readme = "README.md"
+authors = [
+    { name = "pastaisfine", email = "darrentyw5955@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "assemblyai>=1.6.1",
+    "dotenv>=0.9.9",
+    "fastapi>=0.143.0",
+    "ipykernel>=7.4.0",
+    "openai>=3.28.0",
+    "python-dotenv>=1.2.4",
+    "sounddevice>=0.5.6",
+    "streamlit>=1.65.0",
+    "uvicorn>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "S", "PYI", "BLE", "RUF100"]
+ignore = [
+    "E501",   # line length is handled by the formatter
+    "S101",   # asserts are the point in tests
+    "RUF012", # ClassVar annotations are noise for these dataclasses
+    # Every urlopen() call in this project targets a hardcoded https:// constant
+    # (no user input reaches the URL), so the SSRF audit is noise here.
+    "S310",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Pre-existing demo script, deliberately left untouched.
+"src/jev_project/basic.py" = ["BLE001"]
+
+[project.scripts]
+jev-project = "jev_project:main"
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
